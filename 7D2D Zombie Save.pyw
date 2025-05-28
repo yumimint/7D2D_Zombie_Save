@@ -30,7 +30,7 @@ class Application(tk.Frame):
         super().__init__(master)
         self.master = master
 
-        lang = locale.getdefaultlocale()[0]
+        lang = locale.getlocale()
         # lang = "en_US"
 
         i18n = Path(__file__).parent / '7D2D Zombie Save i18n.json'
