@@ -46,6 +46,9 @@ class Application(tk.Frame):
         else:
             self.STRINGS = I18N['en_US']
 
+        icon = Path(__file__).parent / '7D2D Zombie Save.ico'
+        self.master.iconbitmap(icon)
+
         # アプリケーションのタイトルを設定
         self.master.title(self.STRINGS["app_title"])
         self.master.resizable(False, False)  # ウィンドウのリサイズを禁止
