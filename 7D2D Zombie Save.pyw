@@ -8,19 +8,33 @@ import subprocess
 import tkinter as tk
 import tkinter.ttk as ttk
 import zipfile
-from collections import namedtuple
 from pathlib import Path
 from tkinter.messagebox import askyesno, showerror, showinfo
 from typing import Optional
 
 # from ttkthemes import ThemedTk  # ダークテーマのために追加
 
-
-SAVEDATA = namedtuple('SAVEDATA', 'path name worldname')
 SAVES = Path(os.environ['APPDATA']) / '7DaysToDie' / 'Saves'
 # Backups フォルダをスクリプトと同じ階層に作成
 BACKUPS = Path(__file__).parent / '7D2DBackups'
 BACKUPS.mkdir(exist_ok=True)
+
+
+class SAVEDATA:
+    def __init__(self, path: Path):
+        self.path = path
+
+    @property
+    def name(self) -> str:
+        return self.path.name
+
+    @property
+    def world(self) -> str:
+        return self.path.parent.name
+
+    @property
+    def displayname(self) -> str:
+        return f"{self.name} ({self.world})"
 
 
 class Application(tk.Frame):
@@ -161,9 +175,7 @@ class Application(tk.Frame):
             reverse=True)  # 最新順に
 
         for save in self.save_dirs:
-            display_name = f"{save.path.name} ({save.worldname})"
-            # display_name = save.path.name
-            self.save_listbox.insert(tk.END, display_name)
+            self.save_listbox.insert(tk.END, save.displayname)
 
     def on_save_select(self, event):
         """セーブデータリストボックスで項目が選択されたときの処理"""
@@ -233,7 +245,6 @@ class Application(tk.Frame):
         root = save.path.parent.parent  # == SAVES
 
         # アーカイブ名（.zipなし）
-        # archive_name_base = BACKUPS / f"{save.worldname}_{save.name}_{suffix}"
         archive_name_base = BACKUPS / f"{save.name}_{suffix}"
         archive_file = archive_name_base.with_suffix('.zip')  # 正しいzipファイル名
 
@@ -248,7 +259,7 @@ class Application(tk.Frame):
             self.backup_button.config(state=tk.DISABLED)
             self.master.update_idletasks()  # GUIを強制的に更新してメッセージを表示
             shutil.make_archive(str(archive_name_base), 'zip',
-                                root, f"{save.worldname}/{save.name}")
+                                root, f"{save.world}/{save.name}")
             # print(f"バックアップ作成完了: {archive_file}")
             # showinfo(
             #     "バックアップ完了", f"バックアップを作成しました:\n{archive_file.name}")
@@ -421,10 +432,8 @@ class Application(tk.Frame):
             for save in world.iterdir():
                 if not save.is_dir():
                     continue
-                if not (save / 'power.dat').exists():
-                    # "power.dat" が無ければスキップ
-                    continue
-                yield SAVEDATA(save, save.name, world.name)
+                if (save / 'power.dat').exists():
+                    yield SAVEDATA(save)
 
 
 root = tk.Tk()
