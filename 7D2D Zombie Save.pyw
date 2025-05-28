@@ -30,7 +30,8 @@ class Application(tk.Frame):
         super().__init__(master)
         self.master = master
 
-        lang = locale.getlocale()
+        lang = locale.getlocale()[0]
+        print(lang)
         # lang = "en_US"
 
         i18n = Path(__file__).parent / '7D2D Zombie Save i18n.json'
@@ -43,7 +44,7 @@ class Application(tk.Frame):
                 if key not in self.STRINGS:
                     self.STRINGS[key] = text
         else:
-            self.STRINGS = self.I18N['en_US']
+            self.STRINGS = I18N['en_US']
 
         # アプリケーションのタイトルを設定
         self.master.title(self.STRINGS["app_title"])

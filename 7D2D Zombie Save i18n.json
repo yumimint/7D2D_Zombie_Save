@@ -32,7 +32,7 @@
         "status_backing_up": "Backing up...",
         "status_restoring": "Restoring..."
     },
-    "ja_JP": {
+    "Japanese_Japan": {
         "backup_button": "バックアップ",
         "backup_error_title": "バックアップエラー",
         "backup_failed_error_msg": "バックアップの作成に失敗しました。\n\n詳細: {e}",
