@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 import tkinter as tk
-import tkinter.ttk as ttk
+import tkinter.ttk as ttk  # zipfile を明示的に使用するため
 import zipfile
 from collections import namedtuple
 from pathlib import Path
@@ -179,11 +179,6 @@ class Application(tk.Frame):
         self.backup_button.config(state=tk.DISABLED)
         self.save_listbox.delete(0, tk.END)  # リストボックスをクリア
 
-        # if not self.SAVES.exists():
-        #     # print(f"Savesフォルダが見つかりません: {self.SAVES}")
-        #     self.save_listbox.insert(tk.END, "Savesフォルダが見つかりません")
-        #     return
-
         cashed_mtime_of_dir = functools.cache(mtime_of_dir)
 
         # セーブデータの一覧を取得
@@ -206,43 +201,40 @@ class Application(tk.Frame):
             # index = selection[0]
             # selected_save = self.save_dirs[index]
             self.backup_button.config(state=tk.NORMAL)
-            # self.load_backup_data(selected_save)
         else:
             self.backup_button.config(state=tk.DISABLED)
-            # self.load_backup_data(None)  # 選択解除時はバックアップリストもクリア
 
         self.master.update_idletasks()
-
-        # セーブデータ選択変更時は復元ボタンを無効化
-        # self.restore_button.config(state=tk.DISABLED)
 
     def on_backup_select(self, event):
         """バックアップリストボックスで項目が選択されたときの処理"""
         widget = event.widget
         selection = widget.curselection()
         if selection:
-            index = selection[0]
-            selected_backup = self.backup_files[index]
-            print(selected_backup)
+            # index = selection[0]
+            # selected_backup = self.backup_files[index]
+            # print(selected_backup)
             self.restore_button.config(state=tk.NORMAL)
         else:
             self.restore_button.config(state=tk.DISABLED)
 
     def load_backup_data(self, selected_save: Path = None):
-        """バックアップデータの一覧をリストボックスに表示する
-        """
+        """バックアップデータの一覧をリストボックスに表示する"""
         self.restore_button.config(state=tk.DISABLED)  # バックアップリスト更新時は復元ボタンを無効化
 
         if selected_save is None:
             self.backup_files = list(self.BACKUPS.glob("*.zip"))
         else:
-            self.backup_files = list(
-                self.BACKUPS.glob(f"*{selected_save.name}_*.zip"))
+            # selected_saveが在れば関連するzipだけリスト化
+            self.backup_files = list(self.BACKUPS.glob(
+                f"*{selected_save.name}_*.zip"))
 
+        # 更新日時でソート
         self.backup_files = sorted(self.backup_files,
                                    key=lambda x: x.stat().st_mtime,
                                    reverse=True)
 
+        # リストボックスに表示
         self.backup_listbox.delete(0, tk.END)
         for backup_file in self.backup_files:
             self.backup_listbox.insert(tk.END, backup_file.name)
@@ -264,13 +256,11 @@ class Application(tk.Frame):
         y, m, d, hh, mm = dt.year, dt.month, dt.day, dt.hour, dt.minute
 
         suffix = f"{y}{m:02d}{d:02d}T{hh:02d}{mm:02d}"
-        worldname = save.worldname
-        savename = save.path.name
-        root = save.path.parent.parent
+        root = save.path.parent.parent  # == self.SAVES
 
         # アーカイブ名（.zipなし）
-        # archive_name_base = self.BACKUPS / f"{worldname}_{savename}_{suffix}"
-        archive_name_base = self.BACKUPS / f"{savename}_{suffix}"
+        # archive_name_base = self.BACKUPS / f"{save.worldname}_{save.name}_{suffix}"
+        archive_name_base = self.BACKUPS / f"{save.name}_{suffix}"
         archive_file = archive_name_base.with_suffix('.zip')  # 正しいzipファイル名
 
         if archive_file.exists():
@@ -282,10 +272,10 @@ class Application(tk.Frame):
             self.backup_button.config(state=tk.DISABLED)
             self.master.update_idletasks()  # GUIを強制的に更新してメッセージを表示
             shutil.make_archive(str(archive_name_base), 'zip',
-                                root, f"{worldname}/{savename}")
+                                root, f"{save.worldname}/{save.name}")
             # print(f"バックアップ作成完了: {archive_file}")
-            showinfo(
-                "バックアップ完了", f"バックアップを作成しました:\n{archive_file.name}")
+            # showinfo(
+            #     "バックアップ完了", f"バックアップを作成しました:\n{archive_file.name}")
             self.load_backup_data()  # バックアップリストを更新
         except Exception as e:
             showerror(
@@ -295,6 +285,47 @@ class Application(tk.Frame):
             self.status_label.config(text="")  # ステータス表示をクリア
             self.backup_button.config(state=tk.NORMAL)
             self.master.update_idletasks()  # GUIを更新
+
+    def _unpack_archive_preserving_timestamp(self, archive_path: Path, extract_dir: Path):
+        """
+        ZIPアーカイブを展開し、ファイルの更新日時を保持する。
+        """
+        if not archive_path.is_file():
+            raise FileNotFoundError(f"Archive not found: {archive_path}")
+        # このアプリケーションではバックアップはZIPファイルのみを想定しているため、
+        # .zip 拡張子のチェックは省略または簡略化できます。
+
+        with zipfile.ZipFile(archive_path, 'r') as zf:
+            for member_info in zf.infolist():
+                # メンバーを展開
+                # extract() はファイルとディレクトリの両方を処理します。
+                # path 引数で展開先のルートディレクトリを指定します。
+                zf.extract(member_info, path=extract_dir)
+
+                # 展開後の実際のパス
+                # member_info.filename はアーカイブ内の相対パスです。
+                extracted_member_path = extract_dir / member_info.filename
+
+                # 更新日時を設定
+                # ZipInfo.date_time は (year, month, day, hour, minute, second) のタプルです。
+                # ZIP仕様により、year は 1980 以上である必要があります。
+                if member_info.date_time[0] >= 1980:
+                    dt_tuple = member_info.date_time
+                    try:
+                        # datetime オブジェクトを作成
+                        dt = datetime.datetime(*dt_tuple[:6])
+                        # タイムスタンプ (エポック秒) に変換
+                        timestamp = dt.timestamp()
+                        # ファイル/ディレクトリのアクセス時刻と更新時刻を設定
+                        os.utime(extracted_member_path, (timestamp, timestamp))
+                    except Exception:
+                        # タイムスタンプの設定に失敗した場合の警告 (ログなど)
+                        # print(f"Warning: Could not set timestamp for {extracted_member_path}. Error: {e}")
+                        # 処理は続行します。
+                        pass
+                # else:
+                    # 古いZIPファイル等で日時情報が無効な場合は何もしないか、警告を出すことができます。
+                    # print(f"Warning: Invalid date_time for {member_info.filename} in {archive_path}")
 
     def restore_save(self):
         """セーブデータ復元処理"""
@@ -314,6 +345,7 @@ class Application(tk.Frame):
 
         savename = get_savename_from_archive(backup_file)
         if savename is None:
+            showerror("エラー", "バックアップからセーブデータ名を取得できませんでした。")
             return
 
         save_dir = self.SAVES / savename
@@ -336,11 +368,12 @@ class Application(tk.Frame):
             if save_dir.exists():
                 shutil.rmtree(save_dir)
 
-            # バックアップファイルを指定の場所に展開
-            # save_dir.parent に展開することで、元の save_dir と同じ階層構造を復元
-            shutil.unpack_archive(str(backup_file), str(self.SAVES))
+            # バックアップファイルを指定の場所に展開 (更新日時を保持するメソッドを使用)
+            self._unpack_archive_preserving_timestamp(backup_file, self.SAVES)
+            # print(f"セーブデータ復元完了: {savename}")
 
-            showinfo("復元完了", f"セーブデータ「{savename}」を復元しました。")
+            self.load_save_data()  # セーブリストを更新)
+            # showinfo("復元完了", f"セーブデータ「{savename}」を復元しました。")
 
         except FileNotFoundError as e:
             showerror("復元エラー", f"復元中にファイルまたはディレクトリが見つかりませんでした。\n\n詳細: {e}")
