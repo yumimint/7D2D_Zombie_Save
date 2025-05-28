@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 import tkinter as tk
-import tkinter.ttk as ttk  # zipfile を明示的に使用するため
+import tkinter.ttk as ttk
 import zipfile
 from collections import namedtuple
 from pathlib import Path
