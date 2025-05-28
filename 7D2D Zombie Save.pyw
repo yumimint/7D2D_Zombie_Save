@@ -1,5 +1,6 @@
 import datetime
 import functools
+import json
 import locale
 import os
 import shutil
@@ -22,75 +23,6 @@ BACKUPS = Path(__file__).parent / '7D2DBackups'
 BACKUPS.mkdir(exist_ok=True)
 
 
-I18N = {
-    'en_US': {
-        "app_title": "7D2D Zombie Save",
-        "save_data_list_label": "Save Data List",
-        "operations_label": "Operations",
-        "backup_list_label": "Backup List",
-        "backup_button": "Backup",
-        "restore_button": "Restore",
-        "reload_button": "Reload List",
-        "open_backup_folder_button": "Open Backup Folder",
-        "open_saves_folder_button": "Open Saves Folder",
-        "info_title": "Info",
-        "error_title": "Error",
-        "overwrite_confirm_title": "Overwrite Confirmation",
-        "restore_confirm_title": "Restore Confirmation",
-        "backup_error_title": "Backup Error",
-        "restore_error_title": "Restore Error",
-        "folder_open_not_supported_msg": "Automatic folder opening is not supported.\nPath: {path}",
-        "folder_open_error_msg": "Could not open the folder.\n{path}\n\nDetails: {e}",
-        "select_save_for_backup_error_msg": "Please select the save data to back up.",
-        "overwrite_confirm_msg": "{filename} already exists. Do you want to overwrite it?",
-        "status_backing_up": "Backing up...",
-        "backup_failed_error_msg": "Failed to create backup.\n\nDetails: {e}",
-        "select_backup_for_restore_error_msg": "Please select the backup file to restore.",
-        "backup_file_not_found_error_msg": "The specified backup file was not found: {filename}",
-        "cannot_get_savename_error_msg": "Could not retrieve the save data name from the backup.",
-        "restore_confirm_msg": "Do you want to restore save data \"{savename}\" from backup \"{backup_filename}\"?\n\nThe current save data will be overwritten.",
-        "status_restoring": "Restoring...",
-        "restore_file_not_found_error_msg": "File or directory not found during restore.\n\nDetails: {e}",
-        "restore_permission_error_msg": "A permission issue occurred during restore.\n\nDetails: {e}",
-        "restore_bad_zip_error_msg": "The backup file is corrupted or in an invalid format.\n\nDetails: {e}",
-        "restore_unexpected_error_msg": "An unexpected error occurred during restore.\n\nDetails: {e}",
-        "mtime_empty_dir_error_msg": "{path} does not contain any files."
-    },
-    'ja_JP': {
-        "save_data_list_label": "セーブデータリスト",
-        "operations_label": "操作",
-        "backup_list_label": "バックアップリスト",
-        "backup_button": "バックアップ",
-        "restore_button": "復元",
-        "reload_button": "リストを更新",
-        "open_backup_folder_button": "バックアップフォルダを開く",
-        "open_saves_folder_button": "Savesフォルダを開く",
-        "info_title": "情報",
-        "error_title": "エラー",
-        "overwrite_confirm_title": "上書き確認",
-        "restore_confirm_title": "復元の確認",
-        "backup_error_title": "バックアップエラー",
-        "restore_error_title": "復元エラー",
-        "folder_open_not_supported_msg": "フォルダの自動オープンはサポートされていません。\nパス: {path}",
-        "folder_open_error_msg": "フォルダを開けませんでした。\n{path}\n\n詳細: {e}",
-        "select_save_for_backup_error_msg": "バックアップするセーブデータを選択してください。",
-        "overwrite_confirm_msg": "{filename}は既に存在します。上書きしますか？",
-        "status_backing_up": "バックアップしています...",
-        "backup_failed_error_msg": "バックアップの作成に失敗しました。\n\n詳細: {e}",
-        "select_backup_for_restore_error_msg": "復元するバックアップファイルを選択してください。",
-        "backup_file_not_found_error_msg": "指定されたバックアップファイルが見つかりません: {filename}",
-        "cannot_get_savename_error_msg": "バックアップからセーブデータ名を取得できませんでした。",
-        "restore_confirm_msg": "バックアップ「{backup_filename}」からセーブデータ「{savename}」を復元しますか？\n\n現在のセーブデータは上書きされます。",
-        "status_restoring": "復元しています...",
-        "restore_file_not_found_error_msg": "復元中にファイルまたはディレクトリが見つかりませんでした。\n\n詳細: {e}",
-        "restore_permission_error_msg": "復元中にアクセス許可の問題が発生しました。\n\n詳細: {e}",
-        "restore_bad_zip_error_msg": "バックアップファイルが破損しているか、不正な形式です。\n\n詳細: {e}",
-        "restore_unexpected_error_msg": "復元中に予期せぬエラーが発生しました。\n\n詳細: {e}",
-        "mtime_empty_dir_error_msg": "{path} にはファイルが含まれていません。"
-    },
-}
-
-
 class Application(tk.Frame):
     STRINGS = {}
 
@@ -100,6 +32,10 @@ class Application(tk.Frame):
 
         lang = locale.getdefaultlocale()[0]
         # lang = "en_US"
+
+        i18n = Path(__file__).parent / '7D2D Zombie Save i18n.json'
+        with i18n.open(encoding='utf-8') as f:
+            I18N = json.load(f)
 
         if lang in I18N:
             self.STRINGS = I18N[lang].copy()
