@@ -1,4 +1,4 @@
-# 7D2D Zombie Save - Save Game Manager for 7 Days to Die
+# 7D2D Zombie Save - Save Data Manager for 7 Days to Die
 
 ## Overview
 
@@ -6,8 +6,8 @@
 
 ## Features
 
-- **List Save Games**: Automatically detects and lists your "7 Days to Die" save games, showing the save name and the world name.
-- **Create Backups**: Create compressed ZIP backups of selected save games. Backups are timestamped for easy identification (e.g., `MySaveGame_YYYYMMDDTHHMM.zip`).
+- **List Save Data**: Automatically detects and lists your "7 Days to Die" Save Data, showing the save name and the world name.
+- **Create Backups**: Create compressed ZIP backups of selected Save Data. Backups are timestamped for easy identification (e.g., `MySaveGame_YYYYMMDDTHHMM.zip`).
 - **List Backups**: Displays a list of all available backups, sorted by date.
 - **Restore from Backup**: Easily restore a game save from a selected backup file. The tool handles the deletion of the existing save (if any) and extracts the backup to the correct location.
 - **Open Folders**: Provides quick buttons to open:
@@ -26,7 +26,7 @@
 1. **Run the Application**: Execute the `7D2D Zombie Save.pyw` file. This should launch the GUI.
     - On Windows, running a `.pyw` file usually means it will run with `pythonw.exe`, which doesn't open a console window.
 2. **Main Window**:
-    - The left list displays your current "7 Days to Die" save games.
+    - The left list displays your current "7 Days to Die" Save Data.
     - The right list displays available backups.
     - The middle column contains action buttons.
 3. **Creating a Backup**:
@@ -49,7 +49,9 @@
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE.md file for details.
+This project is licensed under the MIT License
+
+- see the LICENSE.md file for details.
 
 ## Contributing
 
