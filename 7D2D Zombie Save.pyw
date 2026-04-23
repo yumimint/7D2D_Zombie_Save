@@ -102,12 +102,14 @@ class Application(tk.Frame):
         style.configure("TButton", font=("Arial", 12))
 
         # リストボックス (左の列に配置)
-        self.save_listbox = tk.Listbox(self.column1, width=40, exportselection=False)
+        self.save_listbox = tk.Listbox(
+            self.column1, width=40, exportselection=False)
         self.save_listbox.pack(pady=10, fill=tk.BOTH, expand=True)
         self.save_listbox.bind("<<ListboxSelect>>", self.on_save_select)
 
         # バックアップリストボックス (右の列に配置)
-        self.backup_listbox = tk.Listbox(self.column3, width=40, exportselection=False)
+        self.backup_listbox = tk.Listbox(
+            self.column3, width=40, exportselection=False)
         self.backup_listbox.pack(pady=10, fill=tk.BOTH, expand=True)
         self.backup_listbox.bind("<<ListboxSelect>>", self.on_backup_select)
 
@@ -193,10 +195,12 @@ class Application(tk.Frame):
             return
         self.stop_monitor_event = threading.Event()
         self.monitored_mtimes = {}  # Reset for a fresh start
-        self.monitor_thread = threading.Thread(target=self.monitor_loop, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self.monitor_loop, daemon=True)
         self.monitor_thread.start()
         self.status_label.config(
-            text=STRINGS.get("status_monitoring_started", "Monitoring started.")
+            text=STRINGS.get("status_monitoring_started",
+                             "Monitoring started.")
         )
 
     def stop_monitoring(self):
@@ -207,7 +211,8 @@ class Application(tk.Frame):
         # For toggling off, just setting the event is enough for the daemon thread.
         self.monitor_thread = None  # Allow garbage collection
         self.status_label.config(
-            text=STRINGS.get("status_monitoring_stopped", "Monitoring stopped.")
+            text=STRINGS.get("status_monitoring_stopped",
+                             "Monitoring stopped.")
         )
         self.monitored_mtimes = {}  # Clear stored mtimes
 
@@ -230,15 +235,18 @@ class Application(tk.Frame):
         while self.stop_monitor_event and not self.stop_monitor_event.wait(5):
             if self.stop_monitor_event and self.stop_monitor_event.is_set():
                 break
-            current_mtimes = {savedir: get_mtime(savedir) for savedir in iter_savedir()}
+            current_mtimes = {savedir: get_mtime(
+                savedir) for savedir in iter_savedir()}
             if current_mtimes == self.monitored_mtimes:
                 continue  # No changes detected
 
-            removed = set(self.monitored_mtimes.keys()) - set(current_mtimes.keys())
+            removed = set(self.monitored_mtimes.keys()) - \
+                set(current_mtimes.keys())
             if removed:
                 logger.info(f"Saves detected as removed: {removed}")
 
-            changed = set(self.monitored_mtimes.items()) ^ set(current_mtimes.items())
+            changed = set(self.monitored_mtimes.items()
+                          ) ^ set(current_mtimes.items())
             changed = set({p[0] for p in changed}) - removed
 
             if changed:
@@ -357,8 +365,11 @@ class Application(tk.Frame):
             self.status_label.config(text=STRINGS["status_backing_up"])
             self.backup_button.config(state=tk.DISABLED)
             self.master.update_idletasks()  # GUIを強制的に更新してメッセージを表示
-            create_backup(savedir, if_exists="confirm")
+            result = create_backup(savedir, if_exists="confirm")
             self.load_backup_data()  # バックアップリストを更新
+            if result == "successed":
+                showinfo(STRINGS["info_title"], STRINGS["backup_done_msg"])
+
         except Exception as e:
             logger.exception(e)
             showerror(
@@ -385,7 +396,8 @@ class Application(tk.Frame):
         if not backup_file.exists():
             showerror(
                 STRINGS["error_title"],
-                STRINGS["backup_file_not_found_error_msg"].format(filename=backup_file),
+                STRINGS["backup_file_not_found_error_msg"].format(
+                    filename=backup_file),
             )
             # ファイル消された？リストを最新に更新しておく
             self.load_backup_data()
@@ -393,7 +405,8 @@ class Application(tk.Frame):
 
         savename = get_savename_from_archive(backup_file)
         if savename is None:
-            showerror(STRINGS["error_title"], STRINGS["cannot_get_savename_error_msg"])
+            showerror(STRINGS["error_title"],
+                      STRINGS["cannot_get_savename_error_msg"])
             return
 
         save_dir = SAVES / savename
@@ -419,6 +432,7 @@ class Application(tk.Frame):
             logger.info(f"restore done: {savename}")
 
             self.load_save_data()  # セーブリストを更新)
+            showinfo(STRINGS["info_title"], STRINGS["restore_done_msg"])
 
         except FileNotFoundError as e:
             logger.error(f"Error during restore: {e}")
@@ -542,7 +556,8 @@ def cashed_mtime_of_tree(path: Path):
 
 
 def mtime_of_tree(path: Path):
-    mtimes = [file.stat().st_mtime for file in path.rglob("*") if file.is_file()]
+    mtimes = [file.stat().st_mtime for file in path.rglob("*")
+              if file.is_file()]
     if not mtimes:
         msg = STRINGS["mtime_empty_dir_error_msg"]
         raise RuntimeError(msg.format(path=path))
@@ -582,7 +597,8 @@ def create_backup(savedir: Path, *, if_exists="confirm"):
         if if_exists == "confirm":
             if not askyesno(
                 STRINGS["overwrite_confirm_title"],
-                STRINGS["overwrite_confirm_msg"].format(filename=archive_file.name),
+                STRINGS["overwrite_confirm_msg"].format(
+                    filename=archive_file.name),
             ):
                 return
         elif if_exists == "ignore":
@@ -603,6 +619,8 @@ def create_backup(savedir: Path, *, if_exists="confirm"):
     )
 
     logger.info(f"backup created: {archive_file.name}")
+
+    return "successed"
 
 
 def main():
