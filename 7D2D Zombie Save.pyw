@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 import threading
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -17,8 +18,20 @@ from typing import Generator, List, Optional
 logger = logging.getLogger(__name__)
 
 SAVES = Path(os.environ["APPDATA"]) / "7DaysToDie" / "Saves"
+
+
+def resource_path(relative_path):
+    """ 同梱ファイルへのパスを取得する """
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstallerでexe化された場合
+        path = sys._MEIPASS
+    else:  # 通常実行の場合
+        path = "."
+    return Path(path) / relative_path
+
+
 # Backups フォルダをスクリプトと同じ階層に作成
-BACKUPS = Path(__file__).parent / "7D2DBackups"
+BACKUPS = Path(sys.argv[0]).parent / ("7D2DBackups")
 BACKUPS.mkdir(exist_ok=True)
 
 STRINGS = {}
@@ -29,7 +42,7 @@ def load_i18n_strings():
     logger.info(f"lang={lang}")
     # lang = "en_US"
 
-    i18n = Path(__file__).parent / "7D2D Zombie Save i18n.json"
+    i18n = resource_path("7D2D Zombie Save i18n.json")
     with i18n.open(encoding="utf-8") as f:
         i18n = json.load(f)
 
@@ -56,16 +69,16 @@ class Application(tk.Frame):
         super().__init__(master)
         self.master = master
 
-        self.saves: Optional[List[Path]] = None
-        self.backups: Optional[List[Path]] = None
+        self.saves = None
+        self.backups = None
 
         # For save data monitoring
         self.monitor_var = tk.BooleanVar(value=False)
-        self.monitor_thread: Optional[threading.Thread] = None
-        self.stop_monitor_event: Optional[threading.Event] = None
-        self.monitored_mtimes: dict[Path, float] = {}
+        self.monitor_thread = None
+        self.stop_monitor_event = None
+        self.monitored_mtimes = {}
 
-        icon = Path(__file__).parent / "7D2D Zombie Save.ico"
+        icon = resource_path("7D2D Zombie Save.ico")
         self.master.iconbitmap(icon)
 
         # アプリケーションのタイトルを設定
